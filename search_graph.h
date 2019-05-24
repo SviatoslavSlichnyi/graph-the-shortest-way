@@ -6,13 +6,21 @@ typedef struct discoveredEdges {
     int y;
     struct discoveredEdges* next;
 } DiscEdges;
-
-
 //saving the path in graph
 typedef struct path {
     int y;
     struct path* next;
 }PATH;
+
+typedef struct minpathlist {
+    int v;
+    struct minpathlist* next;
+}MIN_PATH_LIST;
+typedef struct minpath {
+    int sumWeight;
+    MIN_PATH_LIST* list;
+}MIN_PATH;
+
 
 //set edge label "discovered"
 void edgeWasDiscovered(DiscEdges* discoveredEdges[], int x, int y);

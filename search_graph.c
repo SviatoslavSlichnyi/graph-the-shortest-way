@@ -1,6 +1,27 @@
 #include "search_graph.h"
 
 
+void addVertexMinPath(MIN_PATH_LIST** list, int v)
+{
+    MIN_PATH_LIST* node = malloc(sizeof(MIN_PATH_LIST));
+    node->v = v;
+    node->next = NULL;
+
+    if((*list) == NULL)
+    {
+        *list = node;
+        return;
+    }
+
+    MIN_PATH_LIST* iterator = *list;
+    while( iterator->next != NULL) iterator = iterator->next;
+    iterator->next = node;
+
+}
+
+
+
+
 void edgeWasDiscovered(DiscEdges* discoveredEdges[], int x, int y)
 {
     DiscEdges* node = malloc(sizeof(DiscEdges));
@@ -100,13 +121,31 @@ void printDiscEdges(int nNodes, DiscEdges* discoveredEdges[])
     }
 }
 
-void searchPath(GRAPH* graph, DiscEdges* discoveredEdges[], PATH* start, PATH* end, int x, int v2, int* counter, int *numOfPaths)
+void saveMinPath(PATH* path, MIN_PATH* minPath, int sumOfWeitgh)
+{
+    minPath->sumWeight = sumOfWeitgh;
+
+    while(path != NULL)
+    {
+        addVertexMinPath(&minPath->list, path->y);
+
+        path = path->next;
+    }
+}
+
+void searchPath(GRAPH* graph, DiscEdges* discoveredEdges[], PATH* start, PATH* end, int x, int v2, int* counter, MIN_PATH* minPath, int* sumWeight, int *numOfPaths)
 {
 
     if(x == v2)
     {
+        printf("\nsum of weight: %d\n", *sumWeight);
         printPath(start);
         (*numOfPaths)++;
+    }
+
+    if(x == v2 && *sumWeight < minPath->sumWeight)
+    {
+        saveMinPath(start, minPath, *sumWeight);
         return;
     }
 
@@ -130,8 +169,12 @@ void searchPath(GRAPH* graph, DiscEdges* discoveredEdges[], PATH* start, PATH* e
             //add one step to path counter
             *counter += 1;
 
+            *sumWeight += aroundVertexes->weigth;
+
             //go next
-            searchPath(graph, discoveredEdges, start, end, y, v2, counter, numOfPaths);
+            searchPath(graph, discoveredEdges, start, end, y, v2, counter, minPath, sumWeight, numOfPaths);
+
+            *sumWeight -= aroundVertexes->weigth;
 
             //set edge label "undiscovered"
             setEdgeUndiscovered(discoveredEdges, graph->isDirected, x, y);
@@ -141,13 +184,6 @@ void searchPath(GRAPH* graph, DiscEdges* discoveredEdges[], PATH* start, PATH* e
             *counter -= 1;
         }
 
-    }
-
-    //if the path went through each
-    if(*counter *2 == graph->nEdges)
-    {
-        printPath(start);
-        (*numOfPaths)++;
     }
 
 
@@ -165,18 +201,50 @@ void initializeSearch(GRAPH* graph, DiscEdges* discoveredEdges[], PATH** start, 
     *start = *end;
 }
 
+void print(MIN_PATH* minPath)
+{
+    printf("Sum of weight: %d\n", minPath->sumWeight);
+    MIN_PATH_LIST* node = minPath->list;
+
+    printf("The way: ");
+    while(node != NULL)
+    {
+        printf(" %d", node->v);
+
+        node = node->next;
+    }
+}
+void deleteMinPath(MIN_PATH* minPath)
+{
+    MIN_PATH_LIST* node = minPath->list;
+
+    while (node != NULL)
+    {
+        MIN_PATH_LIST* del = node;
+        node = node->next;
+        free(del);
+    }
+}
+
 void startSearch(GRAPH* graph, int v1, int v2)
 {
     DiscEdges** discoveredEdges = malloc(sizeof(DiscEdges*) * (graph->nNodes+1) );//відкрита// побували чи ні
     PATH *start, *end;//шлях який пройшов алгоритм
     int numOfPaths = 0;
     int counter = 0;
+    int startWeight = 0;
+    MIN_PATH minPath;
+    minPath.sumWeight = INT_MAX;
+    minPath.list = NULL;
 
-    puts("\tEulerian paths:");
+    puts("\tpaths:");
 
     initializeSearch(graph, discoveredEdges, &start, &end, v1);
-    searchPath(graph, discoveredEdges, start, end, v1, v2, &counter, &numOfPaths);
+    searchPath(graph, discoveredEdges, start, end, v1, v2, &counter, &minPath, &startWeight, &numOfPaths);
 
+    printf("\n\tFound way:\n");
+    print(&minPath);
+    deleteMinPath(&minPath);
 
     printf("\n%d paths were found\n", numOfPaths);
     free(discoveredEdges);

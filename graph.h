@@ -5,6 +5,7 @@
 
 typedef struct edgenode {
     int y;
+    int weigth;
     struct edgenode *next;
 } EDGENODE;
 
@@ -18,7 +19,7 @@ typedef struct graph {
 
 void initializeGraph(GRAPH*, _Bool);
 void readGraph(GRAPH*, _Bool);
-void insertEdge(GRAPH*, int, int, _Bool);
+void insertEdge(GRAPH* graph, int x, int y, int weight, _Bool directed);
 void printGraph(GRAPH*);
 void setGraph(GRAPH* graph);
 
